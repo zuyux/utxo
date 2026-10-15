@@ -1,121 +1,85 @@
-# utxo.lat
+<h1 align="center">utxo.lat</h1>
 
-**Rastreador de UTXO de Bitcoin — creado para precisión watch-only**
+<p align="center">Explore Bitcoin, track UTXOs, and monitor public addresses.</p>
 
-`utxo.lat` es una herramienta ligera para monitorear la red Bitcoin.
+<p align="center">
+  <img src="https://img.shields.io/badge/Bitcoin-Mainnet%20%26%20Testnet-F7931A?logo=bitcoin&logoColor=white" alt="Bitcoin mainnet and testnet" />
+  <img src="https://img.shields.io/badge/Mode-Watch--only-2563EB" alt="Watch-only explorer" />
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5" />
+</p>
 
-## Funcionalidades
+<p align="center"><a href="https://utxo.lat">Open utxo.lat</a></p>
 
-- Monitorea cualquier dirección de Bitcoin (Legacy, SegWit, Taproot)
-- Rastrea UTXO individuales: valor, confirmaciones y estado
-- Modo watch-only por diseño
-- Frontend minimalista y modo CLI opcional
-- Soporte de WebSocket para actualizaciones en tiempo real
-- Backend listo para API e integraciones personalizadas
+## What you can do
 
-## Stack
+- Search addresses, transactions, and blocks on Bitcoin mainnet or Testnet3.
+- Inspect unspent transaction outputs (UTXOs), balances, and confirmations.
+- Save public addresses in a local watchlist with labels and wallet groups.
+- Follow recent blocks, mempool activity, and fee estimates.
+- Enable browser alerts for incoming funds, spent UTXOs, confirmations, and balance changes.
+- Print BIP39 word lists and download an offline dice-based seed calculator.
 
-- Backend: Node.js + ElectrumX or Bitcoin Core RPC
-- Frontend: React + Tailwind (or headless CLI)
-- Base de datos: almacén JSON o SQLite
-- Tiempo real: WebSockets
+The explorer is watch-only: you can monitor public addresses without private keys. Watchlists and notification settings are saved in your browser, separately for each network.
 
-## Primeros pasos
+## Run locally
+
+Install Node.js 22.18+ and pnpm 10.34.5, then run:
 
 ```bash
 git clone https://github.com/zuyux/utxo.git
 cd utxo
-
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-Como alternativa temporal, ejecuta `pnpm dev:poll`. El polling evita agotar inotify, pero
-usa más CPU, por lo que no debería ser la opción predeterminada.
+Open [localhost:3000](http://localhost:3000).
 
-## Uso
+The app uses public API providers by default. To customize the mainnet providers, copy the example configuration and edit the URLs:
 
-1. Agrega una dirección de Bitcoin para monitorear
-2. Visualiza sus UTXO con confirmaciones y estado
-3. Recibe actualizaciones cuando los UTXO se confirmen o se gasten
-4. Exporta o integra los datos según sea necesario
+```bash
+cp .env.example .env.local
+```
 
-## Casos de uso
+If file watching hits your system's inotify limit, run `pnpm dev:poll`. Polling uses more CPU.
 
-* Monitorear saldos de almacenamiento en frío
-* Rastrear actividad de direcciones multisig o vaults
-* Integrar datos de UTXO en bots o dashboards
-* Crear listas de seguimiento personalizadas sin comprometer la privacidad
+## Use the explorer
 
-## Roadmap
+1. Open `/` for mainnet or `/testnet` for Testnet3.
+2. Enter an address, transaction ID, block hash, or block height in the search bar.
+3. Open an address to review its balance and UTXOs, then add it to your watchlist.
+4. Add a label and wallet group to organize saved addresses.
+5. Use the header bell to enable notifications. Add transaction IDs in the notification dialog to track confirmations, and use **Send test notification** to check delivery.
 
-* Etiquetado y agrupación de direcciones
-* Sistema de notificaciones (webhooks, email)
-* Mejor soporte para Taproot
-* Listas de seguimiento multi-wallet
+Notifications require browser permission and HTTPS or localhost. Monitoring runs every 30 seconds while the app is open on the selected network; the first successful check establishes a baseline. Background tabs may be throttled, and activity between checks can be missed. Alerts are not delivered after the app closes.
 
-## Licencia
+## Use the offline seed tool
 
-Licencia MIT
+1. Open `/seed` and select a dictionary language. Direct links such as `/seed/fr` select that language.
+2. Print the numbered word list using A1 portrait paper if you want a physical reference.
+3. Download `/seed-offline.html` and transfer it to a trusted offline device.
+4. Open the saved file and follow its instructions: use 128 independent fair-die rolls for 12 words or 256 rolls for 24 words. Odd faces map to `0`; even faces map to `1`.
 
-## Autor
+The calculator bundles all ten official BIP39 word lists, adds the checksum, and works without external dependencies. It does not save rolls or phrases to storage. Instructions and dictionary languages can be selected independently; the offline dictionary defaults to English for wallet compatibility.
 
-@fabohax - [github.com/fabohax](https://github.com/fabohax)
+This tool has not received an independent security audit. A valid checksum does not prove that your dice or device are trustworthy. Confirm your wallet supports the selected language and test recovery offline before funding. Clearing the page cannot guarantee removal from device memory.
 
-### Testnet explorer
+## Development commands
 
-Open `/testnet` (or use the Testnet footer link) to explore Bitcoin Testnet3, matching Blockstream’s `/testnet` network. The dashboard shows recent blocks, mempool activity, fee estimates, and fee distribution, refreshing every 15 seconds. Search transactions, block hashes or heights, and testnet addresses (`m`, `n`, `2`, `tb1`).
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev` | Start the development server |
+| `pnpm build` | Create a production build |
+| `pnpm start` | Serve the production build |
+| `pnpm lint` | Run ESLint |
+| `pnpm seed:offline` | Rebuild the standalone seed calculator |
+| `pnpm test:seed` | Check seed vectors and verify the offline file matches its source |
+| `node --test tests/notification-events.test.ts` | Run notification event regression tests |
 
-Detail routes are `/testnet/tx/[txid]`, `/testnet/block/[identifier]`, and `/testnet/address/[address]`. Testnet data is fetched through `/api/testnet` with Blockstream and mempool.space testnet providers; watchlists are stored separately from mainnet. Amounts use `tBTC` without fiat conversion. Provider failures are displayed as unavailable data.
+Built with Next.js, React, TypeScript, and Tailwind CSS. Blockchain requests use API routes backed by public mempool.space and Blockstream providers.
 
-### Browser notifications
+For social preview artwork and metadata details, see [docs/og-image-prompt.md](docs/og-image-prompt.md). Production metadata uses `https://utxo.lat`; submit `/sitemap.xml` to Google Search Console after deployment.
 
-Use the bell in the header to enable browser notifications and choose alerts for **address received funds**, **UTXO spent**, **transaction confirmed**, and **balance changed**. Addresses come from the saved watchlist; add transaction IDs in the notification dialog to watch confirmations separately. Use “Send test notification” to check browser delivery. Settings and transaction IDs are saved locally, separately for mainnet and testnet.
+## Author
 
-Monitoring checks every 30 seconds while the app is open on the selected network. The first successful check establishes a baseline without replaying historical activity. Confirmation alerts fire when a transaction observed as unconfirmed becomes confirmed. Missing outputs are checked against their spending transaction before a spent alert is sent. Failed checks preserve the previous baseline and retry. Alerts link to the relevant address or transaction.
-
-A supported browser, notification permission, and HTTPS (or localhost for development) are required. This initial version uses browser notifications; background delivery with the app closed and webhook delivery are not included. Browser timers may be throttled in background tabs; each open tab monitors independently. Short-lived activity between polls can be missed.
-
-Notification event regression tests: `node --test tests/notification-events.test.ts` (Node.js 22.18+).
-
-### SEO and social previews
-
-Production metadata uses `https://utxo.lat`. The homepage and explorer detail routes have canonical URLs, individual titles and descriptions, and Open Graph / Twitter large-image previews using `public/utxo-lat-og.png` (1600 × 840, user-updated artwork). The original image generation prompt and current asset details are recorded in `docs/og-image-prompt.md`.
-
-The homepage includes crawlable introductory text and WebSite / WebApplication structured data. `/sitemap.xml` lists the mainnet and testnet landing pages; individual blockchain pages are discovered through links rather than enumerating the entire chain. `/robots.txt` permits public pages and excludes API crawling. Address and block shortcuts redirect permanently to their canonical detail routes. Syntactically invalid detail identifiers receive `noindex` metadata.
-
-Deploy the updated build to publish these changes. After deployment, submit `https://utxo.lat/sitemap.xml` in Google Search Console and request a fresh social preview if an earlier card is cached.
-
-## Physical BIP39 seed tool
-
-`/seed` routes to the device’s supported dictionary language. Selecting a dictionary
-also translates the entire seed page, print labels, instructions and metadata into that
-language. Direct links such as `/seed/fr` keep that language regardless of the explorer’s
-saved language preference. The printable dictionary
-prints a numbered poster (indices 0–2047 with 11-bit binary values).
-Choose A1 portrait for the poster.
-
-Download `/seed-offline.html` and open the saved file on a trusted offline device.
-The standalone calculator includes all ten official word lists, uses Web Crypto SHA-256,
-has no external dependencies, and blocks networking with a hash-based Content Security
-Policy. It never writes rolls or phrases to storage. Its instructions, controls, validation messages and print guidance support all ten
-dictionary languages. The instruction language defaults to a supported device language
-and can be changed independently of the dictionary. The dictionary defaults to English
-for wallet compatibility; changing instructions never changes it. All translations are
-bundled in the downloaded file and work offline.
-
-For a fair six-sided die, odd faces map to 0 and even faces to 1. Exactly 128 independent
-rolls produce 128 bits for a 12-word phrase; 256 rolls produce 256 bits for 24 words.
-The calculator appends ENT/32 checksum bits and maps each 11-bit group to its word.
-It accepts the complete entropy, not an arbitrary prefix of words. The final word includes
-entropy and checksum. Biased dice, compromised devices and browser extensions remain
-risks; this implementation has not had an independent security audit.
-
-Source: `lib/seed-generator.mjs` and `scripts/build-seed-offline.mjs` (MIT).
-Rebuild the downloadable file with `npm run seed:offline`. Run `npm run test:seed`
-to verify all supported languages against the 12/24-word vectors from
-https://github.com/trezor/python-mnemonic/blob/master/vectors.json and check that the
-download matches its source. Vector fixtures contain public examples, never real secrets.
-A checksum verifies the BIP39 structure; it does not prove the dice were fair or the
-computer trustworthy. Confirm wallet language support and test recovery offline before
-funding. Clearing the UI cannot guarantee erasure from memory, swap or browser recovery.
+[@fabohax](https://github.com/fabohax)
