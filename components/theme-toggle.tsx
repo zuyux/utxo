@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { PublicIcon } from "@/components/public-icon"
 import { useLanguage } from "@/lib/i18n"
 
-export function ThemeToggle() {
+export function ThemeToggle({ label }: { label?: string }) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const { t } = useLanguage()
@@ -17,7 +17,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="outline" size="sm" aria-label={t("loadingTheme")}>
+      <Button variant="outline" size="sm" aria-label={label ?? t("loadingTheme")}>
         <PublicIcon name="sun" className="h-4 w-4" />
       </Button>
     )
@@ -27,7 +27,7 @@ export function ThemeToggle() {
     <Button
       variant="outline"
       size="sm"
-      aria-label={t("switchTheme")}
+      aria-label={label ?? t("switchTheme")}
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
     >
       {theme === "light" ? <PublicIcon name="moon" className="h-4 w-4" /> : <PublicIcon name="sun" className="h-4 w-4" />}

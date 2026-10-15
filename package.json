@@ -8,7 +8,9 @@
     "dev": "next dev",
     "dev:poll": "WATCHPACK_POLLING=true next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "seed:offline": "node scripts/build-seed-offline.mjs",
+    "test:seed": "node --test tests/seed-generator.test.mjs && node scripts/build-seed-offline.mjs --check"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

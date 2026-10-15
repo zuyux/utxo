@@ -139,3 +139,77 @@ html:not(.dark) .light-icon-white[data-public-icon] {
     animation-iteration-count: 1 !important;
   }
 }
+
+.seed-print {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  body:has(.seed-print) {
+    background: white !important;
+    color: black !important;
+  }
+
+  body:has(.seed-print) .seed-screen,
+  body:has(.seed-print) footer,
+  body:has(.seed-print) [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  .seed-print {
+    display: block;
+    font-family: sans-serif;
+    font-size: 9pt;
+    line-height: 1.6;
+  }
+
+  .seed-print h1 {
+    font-size: 14pt;
+    margin-bottom: 4mm;
+  }
+
+}
+
+@media print {
+  @page seed-poster {
+    size: 594mm 841mm;
+    margin: 15mm;
+  }
+
+  body:has(.seed-poster) {
+    page: seed-poster;
+  }
+
+  .seed-poster-grid {
+    display: grid;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    grid-template-rows: repeat(128, 5.5mm);
+    grid-auto-flow: column;
+    column-gap: 3mm;
+    font-family: sans-serif;
+  }
+
+  .seed-poster-grid > div {
+    break-inside: avoid;
+    border-bottom: 0.1mm solid #ddd;
+    padding: 0.4mm 0;
+    line-height: 1.2;
+  }
+
+  .seed-poster-grid span {
+    display: block;
+    font-family: monospace;
+    font-size: 4.5pt;
+    color: #444;
+  }
+
+  .seed-poster-grid strong {
+    font-size: 7pt;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+  }
+}

@@ -85,3 +85,37 @@ Production metadata uses `https://utxo.lat`. The homepage and explorer detail ro
 The homepage includes crawlable introductory text and WebSite / WebApplication structured data. `/sitemap.xml` lists the mainnet and testnet landing pages; individual blockchain pages are discovered through links rather than enumerating the entire chain. `/robots.txt` permits public pages and excludes API crawling. Address and block shortcuts redirect permanently to their canonical detail routes. Syntactically invalid detail identifiers receive `noindex` metadata.
 
 Deploy the updated build to publish these changes. After deployment, submit `https://utxo.lat/sitemap.xml` in Google Search Console and request a fresh social preview if an earlier card is cached.
+
+## Physical BIP39 seed tool
+
+`/seed` routes to the device’s supported dictionary language. Selecting a dictionary
+also translates the entire seed page, print labels, instructions and metadata into that
+language. Direct links such as `/seed/fr` keep that language regardless of the explorer’s
+saved language preference. The printable dictionary
+prints a numbered poster (indices 0–2047 with 11-bit binary values).
+Choose A1 portrait for the poster.
+
+Download `/seed-offline.html` and open the saved file on a trusted offline device.
+The standalone calculator includes all ten official word lists, uses Web Crypto SHA-256,
+has no external dependencies, and blocks networking with a hash-based Content Security
+Policy. It never writes rolls or phrases to storage. Its instructions, controls, validation messages and print guidance support all ten
+dictionary languages. The instruction language defaults to a supported device language
+and can be changed independently of the dictionary. The dictionary defaults to English
+for wallet compatibility; changing instructions never changes it. All translations are
+bundled in the downloaded file and work offline.
+
+For a fair six-sided die, odd faces map to 0 and even faces to 1. Exactly 128 independent
+rolls produce 128 bits for a 12-word phrase; 256 rolls produce 256 bits for 24 words.
+The calculator appends ENT/32 checksum bits and maps each 11-bit group to its word.
+It accepts the complete entropy, not an arbitrary prefix of words. The final word includes
+entropy and checksum. Biased dice, compromised devices and browser extensions remain
+risks; this implementation has not had an independent security audit.
+
+Source: `lib/seed-generator.mjs` and `scripts/build-seed-offline.mjs` (MIT).
+Rebuild the downloadable file with `npm run seed:offline`. Run `npm run test:seed`
+to verify all supported languages against the 12/24-word vectors from
+https://github.com/trezor/python-mnemonic/blob/master/vectors.json and check that the
+download matches its source. Vector fixtures contain public examples, never real secrets.
+A checksum verifies the BIP39 structure; it does not prove the dice were fair or the
+computer trustworthy. Confirm wallet language support and test recovery offline before
+funding. Clearing the UI cannot guarantee erasure from memory, swap or browser recovery.

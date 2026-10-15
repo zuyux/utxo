@@ -21,6 +21,7 @@ const iconPaths = {
   hash: "/hash.svg",
   "hard-drive": "/hard-drive.svg",
   info: "/info.svg",
+  key: "/key.svg",
   "miner-users": "/miner-users.svg",
   moon: "/moon.svg",
   received: "/received.svg",

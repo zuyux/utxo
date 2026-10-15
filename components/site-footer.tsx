@@ -2,20 +2,45 @@
 
 import { useExplorerNetwork } from "@/lib/explorer-network"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { seedLanguages } from "@/lib/seed"
+import { getSeedPageCopy } from "@/lib/seed-page-copy"
 import { Github } from "lucide-react"
 import { languages, useLanguage } from "@/lib/i18n"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Watchlist } from "@/components/watchlist"
+import { PublicIcon } from "@/components/public-icon"
 
 export function SiteFooter() {
+  const pathname = usePathname()
   const { prefix, isTestnet } = useExplorerNetwork()
   const { language, setLanguage, t } = useLanguage()
+
+  const seedLanguage = seedLanguages.find((item) => pathname === `/seed/${item.code}`)
+  if (seedLanguage) {
+    const copy = getSeedPageCopy(seedLanguage.code)
+    return <footer className="border-t" lang={seedLanguage.code}>
+      <div className="mx-auto flex min-h-14 max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3 text-xs text-muted-foreground">
+        <p>MIT · 2026 · <Link href="https://zuyux.xyz" target="_blank">zuyux</Link></p>
+        <Link href="/" className="hover:text-foreground">{copy.back}</Link>
+        <a href="https://github.com/zuyux/utxo-lat" aria-label="utxo.lat GitHub" target="_blank" rel="noopener noreferrer"><Github className="size-4" aria-hidden="true" /></a>
+      </div>
+    </footer>
+  }
 
   return (
     <footer className="border-t">
       <div className="mx-auto flex min-h-14 max-w-2xl flex-col items-center justify-between gap-2 px-4 py-3 text-xs text-muted-foreground sm:flex-row">
         <p>MIT License · 2026 · <Link href="https://zuyux.xyz" target="_blank">zuyux</Link></p>
         <div className="flex items-center gap-3">
+          <Link
+            href="/seed"
+            aria-label={language === "es" ? "Semillas" : language === "pt" ? "Sementes" : "Seeds"}
+            title={language === "es" ? "Semillas" : language === "pt" ? "Sementes" : "Seeds"}
+            className="inline-flex items-center transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <PublicIcon name="key" />
+          </Link>
           <Link
             href={isTestnet ? "/" : "/testnet"}
             className="rounded-md border px-2 py-1 text-xs transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
