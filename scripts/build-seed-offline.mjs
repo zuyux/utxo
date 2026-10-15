@@ -11,6 +11,7 @@ const languages = ${JSON.stringify(offlineLanguages)};
 const form = document.querySelector('form');
 const input = document.querySelector('#entropy');
 const output = document.querySelector('#output');
+const randomOutput = document.querySelector('#random-output');
 const progress = document.querySelector('#progress');
 const interfaceSelect = document.querySelector('#interface-language');
 let revision = 0;
@@ -23,7 +24,7 @@ function preferredLanguage(locales) {
  }
  return 'en';
 }
-function resetResult() { revision++; output.replaceChildren(); const value = input.value.replace(/\\s/g, ''); progress.textContent = value.length + ' / ' + document.querySelector('#length').value + ' ' + copy.progress; }
+function resetResult() { revision++; output.replaceChildren(); randomOutput.replaceChildren(); const value = input.value.replace(/\\s/g, ''); progress.textContent = value.length + ' / ' + document.querySelector('#length').value + ' ' + copy.progress; }
 function applyLanguage() {
  const language = interfaceSelect.value; copy = translations[language];
  document.documentElement.lang = language; document.title = copy.title;
@@ -35,24 +36,37 @@ interfaceSelect.addEventListener('change', applyLanguage);
 applyLanguage();
 form.addEventListener('input', resetResult);
 form.addEventListener('change', resetResult);
-form.addEventListener('submit', async (event) => {
- event.preventDefault(); resetResult(); const current = revision;
+async function calculate(event, target = output) {
+ event?.preventDefault(); resetResult(); const current = revision;
  try {
   const compact = input.value.replace(/\\s/g, '');
   const isDice = document.querySelector('#mode').value === 'dice';
-  if (isDice && !/^[1-6]*$/.test(compact)) { output.textContent = copy.invalidDice; return; }
-  if (compact.length !== Number(document.querySelector('#length').value) || (!isDice && !/^[01]+$/.test(compact))) { output.textContent = copy.invalidLength; return; }
+  if (isDice && !/^[1-6]*$/.test(compact)) { target.textContent = copy.invalidDice; return; }
+  if (compact.length !== Number(document.querySelector('#length').value) || (!isDice && !/^[01]+$/.test(compact))) { target.textContent = copy.invalidLength; return; }
   const bits = isDice ? diceToBits(input.value) : compact;
   const dictionary = document.querySelector('#language').value;
   const result = await entropyToMnemonic(bits, lists[dictionary]);
   if (current !== revision) return;
-  const heading = document.createElement('h2'); heading.textContent = copy.recovery; output.append(heading);
+  if (target === randomOutput) {
+   const phrase = document.createElement('p'); phrase.lang = languages.find(item => item[2] === dictionary)[0]; phrase.textContent = result.words.join(' '); target.append(phrase); return;
+  }
+  const heading = document.createElement('h2'); heading.textContent = copy.recovery; target.append(heading);
   const list = document.createElement('ol'); list.lang = languages.find(item => item[2] === dictionary)[0];
-  result.words.forEach((word, index) => { const li = document.createElement('li'); li.textContent = word + ' · ' + result.indices[index] + ' · ' + result.indices[index].toString(2).padStart(11, '0'); list.append(li); }); output.append(list);
-  const details = document.createElement('p'); details.textContent = copy.checksum + ' ' + result.checksum + '. ' + copy.finalIndex + ' ' + result.indices.at(-1); output.append(details);
- } catch { if(current === revision) output.textContent = copy.failure; }
-});
+  result.words.forEach((word, index) => { const li = document.createElement('li'); li.textContent = word + ' · ' + result.indices[index] + ' · ' + result.indices[index].toString(2).padStart(11, '0'); list.append(li); }); target.append(list);
+  const details = document.createElement('p'); details.textContent = copy.checksum + ' ' + result.checksum + '. ' + copy.finalIndex + ' ' + result.indices.at(-1); target.append(details);
+ } catch { if(current === revision) target.textContent = copy.failure; }
+}
+form.addEventListener('submit', (event) => { calculate(event); });
 document.querySelector('#clear').addEventListener('click', () => { input.value = ''; resetResult(); });
+document.querySelector('#generate').addEventListener('click', () => {
+ input.value = ''; resetResult();
+ try {
+  const bits = generateEntropy(Number(document.querySelector('#length').value));
+  document.querySelector('#mode').value = 'bits';
+  input.value = bits;
+  calculate(null, randomOutput);
+ } catch { randomOutput.textContent = copy.randomFailure; }
+});
 window.addEventListener('pagehide', () => { input.value = ''; resetResult(); });`
 const hash = createHash("sha256").update(script).digest("base64")
 const escape = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;")
@@ -62,7 +76,7 @@ const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
 <title>${offlineTranslations.en.title}</title>
-<style>body{font:16px/1.6 system-ui,sans-serif;max-width:760px;margin:auto;padding:24px;color:#171717;background:#fff}h1{line-height:1.2}label{display:block;margin-top:16px}select,textarea,button{font:inherit;padding:10px;border:1px solid #888;border-radius:6px;background:#fff;color:#111;max-width:100%;box-sizing:border-box}textarea{width:100%;min-height:150px}button{margin:16px 8px 0 0;cursor:pointer}ol{columns:2}aside{border:1px solid #888;padding:16px}#output{overflow-wrap:anywhere}.example{margin-top:32px;padding:16px;border:1px solid #888;border-radius:6px}.example pre{white-space:pre-wrap;overflow-wrap:anywhere}.example-warning{font-weight:600}.print-note{display:none}@media(max-width:480px){ol{columns:1}}@media print{form,#output,.interface-controls{display:none}.print-note{display:block}}</style></head>
+<style>body{font:16px/1.6 system-ui,sans-serif;max-width:760px;margin:auto;padding:24px;color:#171717;background:#fff}h1{line-height:1.2}label{display:block;margin-top:16px}select,textarea,button{font:inherit;padding:10px;border:1px solid #888;border-radius:6px;background:#fff;color:#111;max-width:100%;box-sizing:border-box}select,textarea,input{width:100%}textarea{min-height:150px}button{margin:16px 8px 0 0;cursor:pointer}ol{columns:2}aside{border:1px solid #888;padding:16px}#output,#random-output{overflow-wrap:anywhere}.random-generator{margin-top:32px;padding:16px;border:1px solid #888;border-radius:6px}.random-generator summary{cursor:pointer;font-weight:600}.example{margin-top:32px;padding:16px;border:1px solid #888;border-radius:6px}.example pre{white-space:pre-wrap;overflow-wrap:anywhere}.example-warning{font-weight:600}.print-note{display:none}@media(max-width:480px){ol{columns:1}}@media print{form,#output,.interface-controls,.random-generator{display:none}.print-note{display:block}}</style></head>
 <body><div class="interface-controls">${translated("label", "interface", 'for="interface-language"')}<select id="interface-language">${options()}</select></div>
 ${translated("h1", "title")}${translated("p", "subtitle")}${translated("aside", "safety")}
 ${translated("h2", "diceHeading")}${translated("p", "diceInstructions")}${translated("p", "checksumInstructions")}
@@ -80,7 +94,12 @@ ${translated("p", "exampleExplanation")}${translated("h3", "examplePhrase")}
 <p lang="en" dir="ltr" class="example-phrase">${Array(11).fill("abandon").concat("about").join(" ")}</p>
 </section>
 ${translated("h2", "backupHeading")}${translated("p", "backup")}${translated("p", "printNote", 'class="print-note"')}
-<p>github.com/zuyux/utxo-lat · github.com/bitcoin/bips/blob/master/bip-0039.mediawiki · MIT License</p>
+<details class="random-generator">
+${translated("summary", "generate")}
+${translated("p", "randomInstructions")}${translated("button", "generate", 'type="button" id="generate"')}
+<section id="random-output" aria-live="polite"></section>
+</details>
+<p>github.com/zuyux/utxo · github.com/bitcoin/bips/blob/master/bip-0039.mediawiki · MIT License</p>
 <script>${script}</script></body></html>\n`
 const target = new URL("../public/seed-offline.html", import.meta.url)
 if (process.argv.includes("--check")) {

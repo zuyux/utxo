@@ -1,7 +1,26 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
-import { diceToBits, entropyToMnemonic } from "../lib/seed-generator.mjs"
+import { diceToBits, entropyToMnemonic, generateEntropy } from "../lib/seed-generator.mjs"
+
+test("random entropy requests the exact byte count and preserves every bit", (t) => {
+  const sizes = []
+  t.mock.method(globalThis.crypto, "getRandomValues", (bytes) => {
+    sizes.push(bytes.length)
+    bytes.set(Array.from({ length: bytes.length }, (_, index) => index % 2 ? 255 : 0))
+    return bytes
+  })
+  assert.equal(generateEntropy(128), "0000000011111111".repeat(8))
+  assert.equal(generateEntropy(256), "0000000011111111".repeat(16))
+  assert.deepEqual(sizes, [16, 32])
+  assert.throws(() => generateEntropy(129))
+  assert.throws(() => generateEntropy("128"))
+})
+
+test("random entropy fails closed when secure randomness is unavailable", (t) => {
+  t.mock.method(globalThis.crypto, "getRandomValues", () => { throw new Error("unavailable") })
+  assert.throws(() => generateEntropy(128), /unavailable/)
+})
 
 const vectors = JSON.parse(await readFile(new URL("./seed-vectors.json", import.meta.url)))
 for (const [language, cases] of Object.entries(vectors)) {

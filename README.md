@@ -23,8 +23,8 @@
 ## Primeros pasos
 
 ```bash
-git clone https://github.com/zuyux/utxo-lat.git
-cd utxo-lat
+git clone https://github.com/zuyux/utxo.git
+cd utxo
 
 npm install
 npm run dev

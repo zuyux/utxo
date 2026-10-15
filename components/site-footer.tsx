@@ -23,7 +23,7 @@ export function SiteFooter() {
       <div className="mx-auto flex min-h-14 max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3 text-xs text-muted-foreground">
         <p>MIT · 2026 · <Link href="https://zuyux.xyz" target="_blank">zuyux</Link></p>
         <Link href="/" className="hover:text-foreground">{copy.back}</Link>
-        <a href="https://github.com/zuyux/utxo-lat" aria-label="utxo.lat GitHub" target="_blank" rel="noopener noreferrer"><Github className="size-4" aria-hidden="true" /></a>
+        <a href="https://github.com/zuyux/utxo" aria-label="utxo.lat GitHub" target="_blank" rel="noopener noreferrer"><Github className="size-4" aria-hidden="true" /></a>
       </div>
     </footer>
   }
@@ -59,7 +59,7 @@ export function SiteFooter() {
             </SelectContent>
           </Select>
           <a
-            href="https://github.com/zuyux/utxo-lat"
+            href="https://github.com/zuyux/utxo"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
