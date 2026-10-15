@@ -1,15 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, BookOpen, Printer } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ArrowLeft, BookOpen } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { seedLanguages } from "@/lib/seed"
 import { getSeedPageCopy } from "@/lib/seed-page-copy"
 
 export function SeedDictionary({ language, words }: { language: string; words: string[] }) {
-  const router = useRouter()
   const copy = getSeedPageCopy(language)
   const selected = seedLanguages.find((item) => item.code === language)!
 
@@ -26,21 +23,9 @@ export function SeedDictionary({ language, words }: { language: string; words: s
           <h1 className="text-3xl font-semibold sm:text-4xl">{copy.title}</h1>
           <p className="max-w-xl text-muted-foreground">{copy.intro}</p>
         </section>
-        <section className="space-y-4 rounded-xl border p-5" aria-label={copy.language}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="space-y-2">
-              <label htmlFor="seed-language" className="block text-sm">{copy.language}</label>
-              <select id="seed-language" value={language} onChange={(event) => router.push(`/seed/${event.target.value}`)} className="h-10 w-full rounded-md border bg-background px-3 text-sm sm:w-64">
-                {seedLanguages.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
-              </select>
-            </div>
-            <Button onClick={() => window.print()} className="gap-2"><Printer className="size-4" aria-hidden="true" />{copy.print}</Button>
-          </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">{copy.help}</p>
-        </section>
         <section className="space-y-4" aria-labelledby="seed-guide">
           <h2 id="seed-guide" className="text-xl font-semibold">{copy.heading}</h2>
-          <a href="/seed-offline.html" download className="inline-flex rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent">{copy.download}</a>
+          <a href="/seed-offline.html" download className="inline-flex min-h-[76px] w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent">{copy.download}</a>
           <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
             {copy.steps.map((step) => <li key={step} className="pl-2">{step}</li>)}
           </ol>

@@ -57,3 +57,34 @@ test("offline translations cover every language and every message", async () => 
     assert(copy.checksumInstructions.includes("SHA-256"))
   }
 })
+
+test("first receiving public key matches the published BIP84 vector", async () => {
+  const { mnemonicToPublicKey } = await import("../lib/seed-public-key.mjs")
+  const words = Array(11).fill("abandon").concat("about")
+  assert.equal(await mnemonicToPublicKey(words), "0330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c")
+})
+
+test("public key derivation normalizes BIP39 words using NFKD", async () => {
+  const { mnemonicToPublicKey } = await import("../lib/seed-public-key.mjs")
+  const words = JSON.parse(await readFile(new URL("../lib/seed-wordlists/spanish.json", import.meta.url)))
+  const phrase = (await entropyToMnemonic("0".repeat(256), words)).words
+  assert.equal(await mnemonicToPublicKey(phrase.map(word => word.normalize("NFC"))), await mnemonicToPublicKey(phrase.map(word => word.normalize("NFKD"))))
+})
+
+test("passphrase public key matches the published BIP39 seed and preserves spaces", async () => {
+  const { mnemonicToPublicKey, receivingKeyPath } = await import("../lib/seed-public-key.mjs")
+  const { HDKey } = await import("@scure/bip32")
+  const { pbkdf2Sync } = await import("node:crypto")
+  const [, phrase] = vectors.english[0]
+  const seed = "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04"
+  const words = phrase.split(" ")
+  const expected = Buffer.from(HDKey.fromMasterSeed(Buffer.from(seed, "hex")).derive(receivingKeyPath).publicKey).toString("hex")
+  assert.equal(await mnemonicToPublicKey(words, "TREZOR"), expected)
+  assert.notEqual(await mnemonicToPublicKey(words, "TREZOR"), await mnemonicToPublicKey(words))
+  const passphrase = " café "
+  const referenceSeed = pbkdf2Sync(phrase.normalize("NFKD"), ("mnemonic" + passphrase).normalize("NFKD"), 2048, 64, "sha512")
+  const referenceKey = Buffer.from(HDKey.fromMasterSeed(referenceSeed).derive(receivingKeyPath).publicKey).toString("hex")
+  assert.equal(await mnemonicToPublicKey(words, passphrase), referenceKey)
+  assert.equal(await mnemonicToPublicKey(words, passphrase.normalize("NFKD")), referenceKey)
+  assert.notEqual(await mnemonicToPublicKey(words, passphrase.trim()), referenceKey)
+})
