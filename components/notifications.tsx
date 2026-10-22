@@ -32,12 +32,19 @@ interface NotificationContextValue {
 }
 const NotificationContext = createContext<NotificationContextValue | null>(null)
 
+export function useBrowserNotifications() {
+  const context = useContext(NotificationContext)
+  if (!context) throw new Error("useBrowserNotifications must be used inside NotificationsProvider")
+  return context
+}
+
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { apiFetch, isTestnet } = useExplorerNetwork()
   const { language } = useLanguage()
   const words = copy[language]
   const key = `utxo-notifications${isTestnet ? "-testnet" : ""}`
   const [settings, setSettings] = useState<Settings>(defaults)
+  const settingsRef = useRef(settings)
   const router = useRouter()
   const [loadedKey, setLoadedKey] = useState("")
   const ready = loadedKey === key
@@ -47,24 +54,27 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const latest = useRef({ settings, words })
   useEffect(() => { latest.current = { settings, words } }, [settings, words])
   useEffect(() => {
-    setSettings(readSettings(key))
+    const storedSettings = readSettings(key)
+    settingsRef.current = storedSettings
+    setSettings(storedSettings)
     setLoadedKey(key)
     setLastCheck(0)
     setFailed(false)
     setPermission("Notification" in window && window.isSecureContext ? Notification.permission : "unsupported")
   }, [key])
   const update = (next: Settings) => {
+    settingsRef.current = next
     setSettings(next)
     try { localStorage.setItem(key, JSON.stringify(next)) } catch { toast.error(words.storage) }
   }
   const enable = async (enabled: boolean) => {
-    if (!enabled) { update({ ...settings, enabled: false }); return }
+    if (!enabled) { update({ ...settingsRef.current, enabled: false }); return }
     if (!("Notification" in window) || !window.isSecureContext) { toast.error(words.unsupported); return }
     let result: NotificationPermission
     try { result = await Notification.requestPermission() } catch { toast.error(words.denied); return }
     setPermission(result)
     if (result !== "granted") { toast.error(words.denied); return }
-    update({ ...settings, enabled: true })
+    update({ ...settingsRef.current, enabled: true })
   }
   useEffect(() => {
     if (!ready || !settings.enabled || !("Notification" in window) || !window.isSecureContext) return
@@ -162,11 +172,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 }
 
 export function Notifications() {
-  const context = useContext(NotificationContext)
+  const context = useBrowserNotifications()
   const { language, locale } = useLanguage()
   const { isTestnet } = useExplorerNetwork()
   const [txid, setTxid] = useState("")
-  if (!context) return null
   const { settings, update, permission, enable, lastCheck, failed, ready } = context
   const words = copy[language]
   return <Dialog>
@@ -181,6 +190,7 @@ export function Notifications() {
         event.preventDefault()
         const id = txid.trim().toLowerCase()
         if (!/^[a-f0-9]{64}$/.test(id)) { toast.error(words.invalid); return }
+        void enable(true)
         update({ ...settings, transactions: [...new Set([...settings.transactions, id])] })
         setTxid("")
       }}><Label htmlFor="notification-tx">{words.watch}</Label><div className="flex gap-2"><Input id="notification-tx" value={txid} onChange={(event) => setTxid(event.target.value)} placeholder={words.tx} autoComplete="off" /><Button type="submit">{words.add}</Button></div></form>

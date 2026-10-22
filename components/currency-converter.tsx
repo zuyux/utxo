@@ -26,6 +26,7 @@ import {
 import { useLanguage } from "@/lib/i18n"
 
 type BitcoinUnit = "BTC" | "SAT"
+const bitcoinUnitStorageKey = "converter-bitcoin-unit"
 type PriceResponse = { time: number; source: string } & Partial<Record<CurrencyCode, number>>
 
 const satsPerBtc = 100_000_000
@@ -71,9 +72,13 @@ export function CurrencyConverter() {
   const [editingAmount, setEditingAmount] = useState<"bitcoin" | "fiat">("bitcoin")
   const [currencySearch, setCurrencySearch] = useState("")
   const [isCurrencySearchFocused, setIsCurrencySearchFocused] = useState(false)
+  const [isCurrencyListOpen, setIsCurrencyListOpen] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
+    const storedUnit = window.localStorage.getItem(bitcoinUnitStorageKey)
+    if (storedUnit === "BTC" || storedUnit === "SAT") setBitcoinUnit(storedUnit)
+
     const storedCurrency = window.localStorage.getItem(currencyStorageKey)
     if (isCurrencyCode(storedCurrency)) {
       setSelectedCurrency(storedCurrency)
@@ -143,6 +148,7 @@ export function CurrencyConverter() {
     if (!isCurrencyCode(value)) return
     setSelectedCurrency(value)
     setCurrencySearch("")
+    setIsCurrencyListOpen(false)
     window.localStorage.setItem(currencyStorageKey, value)
     window.dispatchEvent(new CustomEvent(currencySelectionChangeEvent, { detail: value }))
   }
@@ -151,6 +157,7 @@ export function CurrencyConverter() {
     const nextUnit = bitcoinUnit === "BTC" ? "SAT" : "BTC"
     const btcAmount = bitcoinAmount.trim() === "" ? null : cryptoAmountToBtc(bitcoinAmount, bitcoinUnit)
     setBitcoinUnit(nextUnit)
+    window.localStorage.setItem(bitcoinUnitStorageKey, nextUnit)
     if (btcAmount !== null) {
       setBitcoinAmount(btcToCryptoAmount(btcAmount, nextUnit))
     }
@@ -158,6 +165,7 @@ export function CurrencyConverter() {
 
   const handlePresetBtcAmount = (amount: number) => {
     setBitcoinUnit("BTC")
+    window.localStorage.setItem(bitcoinUnitStorageKey, "BTC")
     handleBitcoinChange(String(amount))
   }
 
@@ -208,10 +216,14 @@ export function CurrencyConverter() {
             placeholder={t("searchCurrency")}
             value={isCurrencySearchFocused ? currencySearch : currencySearch || selectedCurrencyLabel}
             onChange={(event) => setCurrencySearch(event.target.value)}
-            onFocus={() => setIsCurrencySearchFocused(true)}
+            onFocus={() => {
+              setIsCurrencySearchFocused(true)
+              setIsCurrencyListOpen(true)
+            }}
+            onClick={() => setIsCurrencyListOpen(true)}
             onBlur={() => setIsCurrencySearchFocused(false)}
           />
-          <div
+          {isCurrencyListOpen && <div
             className="max-h-56 overflow-y-auto rounded-md border bg-background p-1"
             role="listbox"
             aria-label={t("fiatCurrency")}
@@ -241,7 +253,7 @@ export function CurrencyConverter() {
                 {t("noCurrenciesFound")}
               </div>
             )}
-          </div>
+          </div>}
         </div>
 
         <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">

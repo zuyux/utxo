@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { PublicIcon } from "@/components/public-icon"
 import { useLanguage } from "@/lib/i18n"
 import { type BitcoinUnit, formatBitcoinAmount } from "@/lib/mempool"
+import { useBrowserNotifications } from "@/components/notifications"
 
 interface WatchAddress {
   id: string
@@ -76,6 +77,7 @@ interface WatchlistProps {
 
 export function Watchlist({ addressToAdd = "", trigger = "button" }: WatchlistProps) {
   const { isTestnet, apiFetch } = useExplorerNetwork()
+  const { enable: enableNotifications } = useBrowserNotifications()
   const storageKey = isTestnet ? "utxo-watchlist-testnet" : "utxo-watchlist"
   const { locale, t } = useLanguage()
   const [open, setOpen] = useState(false)
@@ -165,6 +167,7 @@ export function Watchlist({ addressToAdd = "", trigger = "button" }: WatchlistPr
       createdAt: Date.now(),
     }
     const nextAddresses = [nextItem, ...addresses]
+    void enableNotifications(true)
     setAddresses(nextAddresses)
     setAddress("")
     setLabel("")
